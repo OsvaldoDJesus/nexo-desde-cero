@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, UserPlus, Save, Hexagon, CheckCircle2 } from 'lucide-vue-next';
 import { useApplication, errorMessage, fieldErrorsOf, roleLabel, statusLabel } from '../context';
+import { useSession } from '../session-state';
 import { USER_ROLES, USER_STATUSES, type UserRole, type UserStatus } from '../../../domain/constants/user';
 const app = useApplication(); const route = useRoute(); const router = useRouter();
 const register = !!route.meta.register; const editing = computed(() => typeof route.params.id === 'string');
@@ -11,7 +12,8 @@ const busy = ref(false); const loading = ref(editing.value); const error = ref('
 // Ejercicio 6 de la guía 13: un mensaje por campo, debajo de su input.
 const fieldErrors = ref<Record<string, string>>({});
 function clearField(field: string) { delete fieldErrors.value[field]; }
-const canEdit = computed(() => !editing.value || app.currentSession()?.role === 'ADMIN');
+const { current: session } = useSession();
+const canEdit = computed(() => !editing.value || session.value?.role === 'ADMIN');
 onMounted(async () => { if (!editing.value) return; try { const user = await app.get({ id: id.value }); name.value = user.name; email.value = user.email; role.value = user.role; status.value = user.status; loaded.value = true; } catch (e) { error.value = errorMessage(e); } finally { loading.value = false; } });
 async function submit() {
   busy.value = true; error.value = ''; fieldErrors.value = {};

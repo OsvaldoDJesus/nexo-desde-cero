@@ -3,12 +3,14 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { House, Users, UserPlus, Pencil, Trash2, LogOut, Hexagon, ArrowUpRight, ShieldCheck } from 'lucide-vue-next';
 import { useApplication, roleLabel } from './context';
+import { useSession } from './session-state';
 const route = useRoute(); const router = useRouter(); const app = useApplication();
-const session = computed(() => { void route.fullPath; return app.currentSession(); });
+// Ejercicio 7: la sesión viene del estado compartido, ya no de releerla en cada cambio de ruta.
+const { current: session, refresh } = useSession();
 // Ejercicio guía 13: expiresAt ya viene en milisegundos; solo se formatea para mostrarlo.
 const expiresAt = computed(() => session.value ? new Date(session.value.expiresAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '');
 const nav = [ { to: '/', label: 'Inicio', icon: House }, { to: '/usuarios/crear', label: 'Crear usuario', icon: UserPlus }, { to: '/usuarios', label: 'Listar usuarios', icon: Users }, { to: '/usuarios/editar', label: 'Editar usuario', icon: Pencil }, { to: '/usuarios/eliminar', label: 'Eliminar usuario', icon: Trash2 } ];
-function logout() { app.logout(); void router.replace('/login'); }
+function logout() { app.logout(); refresh(); void router.replace('/login'); }
 </script>
 <template>
   <div v-if="!route.meta.public" class="workspace">

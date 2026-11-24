@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { ArrowUpRight, ArrowRight, Users, UserPlus, ShieldCheck, Pencil, CircleHelp } from 'lucide-vue-next';
 import { useApplication, errorMessage, roleLabel, statusLabel } from '../context';
+import { useSession } from '../session-state';
 import type { UserResponse } from '../../../application/dto/responses/user-responses';
-const app = useApplication(); const session = app.currentSession();
+const app = useApplication(); const { current: session } = useSession();
 const users = ref<UserResponse[]>([]); const busy = ref(true); const error = ref('');
-const canRead = session?.role === 'ADMIN' || session?.role === 'REVIEWER';
-onMounted(async () => { try { if (canRead) users.value = await app.list(); } catch (e) { error.value = errorMessage(e); } finally { busy.value = false; } });
+const canRead = computed(() => session.value?.role === 'ADMIN' || session.value?.role === 'REVIEWER');
+onMounted(async () => { try { if (canRead.value) users.value = await app.list(); } catch (e) { error.value = errorMessage(e); } finally { busy.value = false; } });
 const initials = (name: string) => name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
 </script>
 <template>

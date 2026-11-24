@@ -3,12 +3,13 @@ import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { UserPlus, Search, Pencil, Trash2, RefreshCw, X, Users, ArrowLeft, ArrowRight } from 'lucide-vue-next';
 import { useApplication, errorMessage, roleLabel, statusLabel } from '../context';
+import { useSession } from '../session-state';
 import type { UserResponse } from '../../../application/dto/responses/user-responses';
 const app = useApplication(); const route = useRoute(); const users = ref<UserResponse[]>([]); const search = ref(''); const status = ref(''); const busy = ref(false); const deleting = ref(false); const error = ref(''); const success = ref(''); const selected = ref<UserResponse | null>(null); const cancelButton = ref<HTMLButtonElement>(); const previousFocus = ref<HTMLElement | null>(null); const page = ref(1); const pageSize = 5;
-const canRead = ['ADMIN', 'REVIEWER'].includes(app.currentSession()?.role || ''); const admin = app.currentSession()?.role === 'ADMIN';
+const { current: session } = useSession(); const canRead = computed(() => ['ADMIN', 'REVIEWER'].includes(session.value?.role || '')); const admin = computed(() => session.value?.role === 'ADMIN');
 const filtered = computed(() => users.value.filter(u => `${u.name} ${u.email} ${u.id}`.toLowerCase().includes(search.value.toLowerCase().trim()) && (!status.value || status.value === u.status)));
 const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize))); const currentPage = computed(() => Math.min(page.value, pages.value)); const visible = computed(() => filtered.value.slice((currentPage.value - 1) * pageSize, currentPage.value * pageSize));
-async function load() { if (!canRead) return; busy.value = true; error.value = ''; try { users.value = await app.list(); } catch (e) { error.value = errorMessage(e); } finally { busy.value = false; } }
+async function load() { if (!canRead.value) return; busy.value = true; error.value = ''; try { users.value = await app.list(); } catch (e) { error.value = errorMessage(e); } finally { busy.value = false; } }
 onMounted(load);
 async function confirm(user: UserResponse) { previousFocus.value = document.activeElement as HTMLElement; selected.value = user; await nextTick(); cancelButton.value?.focus(); }
 function close() { if (deleting.value) return; selected.value = null; previousFocus.value?.focus(); }

@@ -3,7 +3,8 @@ import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Hexagon, ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-vue-next';
 import { useApplication, errorMessage, fieldErrorsOf } from '../context';
-const app = useApplication(); const router = useRouter(); const route = useRoute();
+import { useSession } from '../session-state';
+const app = useApplication(); const router = useRouter(); const route = useRoute(); const { refresh } = useSession();
 const email = ref(''); const password = ref(''); const show = ref(false); const busy = ref(false); const error = ref('');
 // Ejercicio 6 de la guía 13: errores por campo.
 const fieldErrors = ref<Record<string, string>>({});
@@ -12,6 +13,7 @@ async function submit() {
   busy.value = true; error.value = ''; fieldErrors.value = {};
   try {
     await app.login({ email: email.value, password: password.value });
+    refresh();
     const redirect = typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/') && !route.query.redirect.startsWith('//') ? route.query.redirect : '/';
     await router.replace(redirect);
   } catch (e) { fieldErrors.value = fieldErrorsOf(e); error.value = Object.keys(fieldErrors.value).length ? 'Revisa los campos marcados.' : errorMessage(e); } finally { busy.value = false; }
