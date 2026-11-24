@@ -4,10 +4,12 @@ import AuthView from './views/AuthView.vue';
 import HomeView from './views/HomeView.vue';
 import UsersView from './views/UsersView.vue';
 import UserFormView from './views/UserFormView.vue';
+import SaludoPractica from './practicas/SaludoPractica.vue';
 export function createAppRouter(app: UseCases) {
   const router = createRouter({ history: createWebHistory(), routes: [
     { path: '/login', component: AuthView, meta: { public: true } },
     { path: '/registro', component: UserFormView, meta: { public: true, register: true } },
+    { path: '/practica/guia-02', component: SaludoPractica, meta: { public: true } },
     { path: '/', component: HomeView },
     { path: '/usuarios', component: UsersView },
     { path: '/usuarios/crear', component: UserFormView },
