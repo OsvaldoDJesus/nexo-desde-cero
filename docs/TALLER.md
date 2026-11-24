@@ -1,8 +1,9 @@
 # Taller Nexo · Vue 3 + TypeScript con arquitectura hexagonal
 
-Respuestas, prácticas y evidencias de las 14 guías del instructor John Carlos Arrieta Arrieta.
+Respuestas, prácticas y evidencias de las 14 guías del taller.
 
-- **Estudiante:** _(completar)_
+- **Estudiante:** Osvaldo De Jesus Pacheco Sanabria
+- **Profesor:** John Carlos Arrieta Arrieta
 - **Proyecto de referencia:** [arrietajohn/user-crud-vuejs-app](https://github.com/arrietajohn/user-crud-vuejs-app) (licencia MIT)
 - **Este repositorio:** reconstrucción desde una carpeta vacía siguiendo el **Camino B** de la guía 01, con **un commit por guía**. La rama `ejercicios` contiene las prácticas que las guías piden hacer "en una copia o rama propia".
 

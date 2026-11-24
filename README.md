@@ -1,6 +1,9 @@
 # Nexo desde cero · Taller Vue 3 + TypeScript
 
-Reconstrucción paso a paso de **Nexo · Administración de usuarios**, la aplicación Vue 3 + TypeScript con arquitectura hexagonal del instructor John Carlos Arrieta Arrieta ([proyecto original](https://github.com/arrietajohn/user-crud-vuejs-app), licencia MIT), siguiendo sus 14 guías.
+Reconstrucción paso a paso de **Nexo · Administración de usuarios**, la aplicación Vue 3 + TypeScript con arquitectura hexagonal del profesor John Carlos Arrieta Arrieta ([proyecto original](https://github.com/arrietajohn/user-crud-vuejs-app), licencia MIT), siguiendo sus 14 guías.
+
+- **Estudiante:** Osvaldo De Jesus Pacheco Sanabria
+- **Profesor:** John Carlos Arrieta Arrieta
 
 - **[docs/TALLER.md](docs/TALLER.md):** respuestas de cada guía, prácticas, ejercicios y capturas de evidencia.
 - **Rama `main`:** el proyecto reconstruido desde una carpeta vacía, con un commit por guía.
