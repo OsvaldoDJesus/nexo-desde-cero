@@ -13,5 +13,5 @@
 .session-expiry { margin-left: 6px; color: var(--muted); font-size: 12px; }
 
 /* Ejercicio 6 de la guía 13: mensaje de error debajo de cada campo */
-.field-error { display: block; margin: -6px 0 12px; color: #b42318; font-size: 13px; }
+.field-error { display: block; margin: 6px 0 0; color: #b42318; font-size: 13px; }
 input[aria-invalid="true"] { border-color: #d92d20; }
