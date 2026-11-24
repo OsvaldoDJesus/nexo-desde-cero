@@ -2,16 +2,19 @@
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Hexagon, ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-vue-next';
-import { useApplication, errorMessage } from '../context';
+import { useApplication, errorMessage, fieldErrorsOf } from '../context';
 const app = useApplication(); const router = useRouter(); const route = useRoute();
 const email = ref(''); const password = ref(''); const show = ref(false); const busy = ref(false); const error = ref('');
+// Ejercicio 6 de la guía 13: errores por campo.
+const fieldErrors = ref<Record<string, string>>({});
+function clearField(field: string) { delete fieldErrors.value[field]; }
 async function submit() {
-  busy.value = true; error.value = '';
+  busy.value = true; error.value = ''; fieldErrors.value = {};
   try {
     await app.login({ email: email.value, password: password.value });
     const redirect = typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/') && !route.query.redirect.startsWith('//') ? route.query.redirect : '/';
     await router.replace(redirect);
-  } catch (e) { error.value = errorMessage(e); } finally { busy.value = false; }
+  } catch (e) { fieldErrors.value = fieldErrorsOf(e); error.value = Object.keys(fieldErrors.value).length ? 'Revisa los campos marcados.' : errorMessage(e); } finally { busy.value = false; }
 }
 </script>
 <template>
@@ -19,7 +22,7 @@ async function submit() {
   <section class="auth-form-area"><div class="auth-card"><span class="eyebrow">BIENVENIDO A NEXO</span><h2>Qué bueno verte de nuevo.</h2><p class="muted">Inicia sesión para entrar a tu espacio de trabajo.</p>
     <div v-if="route.query.expired" class="notice" role="alert">Tu sesión venció. Inicia sesión nuevamente.</div>
     <div v-if="error" class="error" role="alert">{{ error }}</div>
-    <form @submit.prevent="submit"><label for="email">Correo electrónico</label><input id="email" v-model="email" type="email" autocomplete="username" placeholder="tu@organizacion.com" required/><label for="password">Contraseña</label><div class="password-field"><input id="password" v-model="password" :type="show ? 'text' : 'password'" autocomplete="current-password" placeholder="Ingresa tu contraseña" required/><button type="button" :aria-label="show ? 'Ocultar contraseña' : 'Mostrar contraseña'" @click="show = !show"><component :is="show ? EyeOff : Eye" :size="18"/></button></div><button class="button primary full" :disabled="busy">{{ busy ? 'Iniciando sesión…' : 'Iniciar sesión' }}<ArrowRight :size="18"/></button></form>
+    <form @submit.prevent="submit"><label for="email">Correo electrónico</label><input id="email" v-model="email" type="email" autocomplete="username" placeholder="tu@organizacion.com" required :aria-invalid="!!fieldErrors.email" :aria-describedby="fieldErrors.email ? 'email-error' : undefined" @input="clearField('email')"/><small v-if="fieldErrors.email" id="email-error" class="field-error">{{ fieldErrors.email }}</small><label for="password">Contraseña</label><div class="password-field"><input id="password" v-model="password" :type="show ? 'text' : 'password'" autocomplete="current-password" placeholder="Ingresa tu contraseña" required :aria-invalid="!!fieldErrors.password" :aria-describedby="fieldErrors.password ? 'password-error' : undefined" @input="clearField('password')"/><button type="button" :aria-label="show ? 'Ocultar contraseña' : 'Mostrar contraseña'" @click="show = !show"><component :is="show ? EyeOff : Eye" :size="18"/></button></div><small v-if="fieldErrors.password" id="password-error" class="field-error">{{ fieldErrors.password }}</small><button class="button primary full" :disabled="busy">{{ busy ? 'Iniciando sesión…' : 'Iniciar sesión' }}<ArrowRight :size="18"/></button></form>
     <div class="auth-register">¿Aún no tienes una cuenta? <RouterLink to="/registro">Crear usuario ↗</RouterLink></div><div class="auth-security"><ShieldCheck :size="16"/> Tu información viaja de forma segura.</div>
   </div><span class="auth-copyright">© {{ new Date().getFullYear() }} Nexo. Hecho para conectar.</span></section></div>
 </template>

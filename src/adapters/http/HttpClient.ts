@@ -1,5 +1,15 @@
 import type { SessionStore } from '../../domain/ports/out/SessionStore';
-import { ApiError, UnauthorizedError } from '../../domain/exceptions/errors';
+import { ApiError, ApiValidationError, UnauthorizedError } from '../../domain/exceptions/errors';
+// Ejercicio 6 de la guía 13: user-service responde los 400 de validación como "campo: mensaje, campo: mensaje".
+export function parseFieldErrors(message: unknown): Record<string, string> {
+  if (typeof message !== 'string') return {};
+  const fields: Record<string, string> = {};
+  for (const part of message.split(/,\s*(?=[A-Za-z]+:\s)/)) {
+    const match = /^([A-Za-z]+):\s*(.+)$/.exec(part.trim());
+    if (match) fields[match[1]!] ??= match[2]!;
+  }
+  return fields;
+}
 export class HttpClient {
   constructor(private readonly baseUrl: string, private readonly sessions: SessionStore, private readonly onUnauthorized: () => void) {}
   async request<T>(path: string, method = 'GET', body?: unknown, authenticated = true): Promise<T> {
@@ -20,6 +30,10 @@ export class HttpClient {
       }
       if (!response.ok) {
         const error = await response.json().catch(() => null);
+        if (response.status === 400) {
+          const fields = parseFieldErrors(error?.message);
+          if (Object.keys(fields).length) throw new ApiValidationError('Revisa los campos marcados.', fields);
+        }
         const defaults: Record<number, string> = { 400: 'Revisa los datos ingresados.', 401: 'Correo o contraseña incorrectos, o cuenta pendiente de activación.', 403: 'No tienes permisos para realizar esta acción.', 404: 'No se encontró el usuario.', 409: 'Ya existe un usuario con ese identificador o correo.' };
         throw new ApiError(defaults[response.status] || (response.status >= 500 ? 'El servicio no está disponible. Intenta nuevamente.' : error?.message || 'No se pudo completar la solicitud.'), response.status);
       }
