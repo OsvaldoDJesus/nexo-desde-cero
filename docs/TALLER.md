@@ -11,16 +11,17 @@ Respuestas, prácticas y evidencias de las 14 guías del instructor John Carlos 
 | Comprobación | Comando | Resultado en `main` | Resultado en `ejercicios` |
 | --- | --- | --- | --- |
 | Tipos | `npx vue-tsc --noEmit` | Sin errores | Sin errores |
-| Pruebas unitarias | `npm test` | 8 de 8 correctas | 8 de 8 correctas |
+| Pruebas unitarias | `npm test` | 8 de 8 correctas | 13 de 13 correctas (8 originales + 5 de los ejercicios 6 y 7) |
 | Build de producción | `npm run build` | Correcto (`dist/`, JS 134 kB, CSS 20 kB) | Correcto |
 | Pruebas de navegador | `npm run test:e2e` | 4 de 4 correctas | 4 de 4 correctas |
-| Recorrido manual en Chrome | Simulación Postman + Vite | Login, guard, CRUD, roles, registro, 403 y 401 verificados | Ejercicios verificados |
+| Recorrido en Chrome con la simulación Postman | Simulación + Vite | Login, guard, CRUD, roles, registro, 403 y 401 | Ejercicios 1 a 5 y prácticas |
+| Recorrido en Chrome con el **backend real** (user-service en Docker) | MySQL + RabbitMQ + API Java + Vite | Login, CRUD completo, guard y "Atrás" tras cerrar sesión | Ejercicios 6 y 7 |
 
-**Entorno usado:** Windows 11, Node 22.18.0, npm 10.5.1 (las dependencias de desarrollo se instalaron con npm 11.21.3 mediante `npx`, ver [problemas](#problemas-reales-encontrados-y-cómo-se-resolvieron)), Postman CLI 1.94.0, Playwright 1.64.1 con su Chromium, Google Chrome para el recorrido manual.
+**Entorno usado:** Windows 11, Node 22.18.0, npm 10.5.1 (las dependencias de desarrollo se instalaron con npm 11.21.3 mediante `npx`, ver [problemas](#problemas-reales-encontrados-y-cómo-se-resolvieron)), Postman CLI 1.94.0, Playwright 1.64.1 con su Chromium, Docker 29 para el backend, Google Chrome para los recorridos.
 
 La guía recomienda Node 26; usé Node 22.18 porque ya estaba instalado y la propia guía indica que Vite acepta Node 22.12 o superior y Vitest 5 acepta Node 22.12, 24 o 26. Todas las comprobaciones pasaron con esa versión.
 
-**Sobre la cuenta:** no tengo una cuenta ACTIVE del backend real, así que todo el recorrido se hizo contra la **simulación local de Postman** (guía 12, sección 8) con `admin@example.com / password123`, que solo existen en el mock. La API remota de Render respondió `401` a un login con datos falsos, lo que demuestra que estaba en línea, pero no se probó con una cuenta real.
+**Dos recorridos:** primero contra la **simulación local de Postman** (guía 12, sección 8), con la cuenta `admin@example.com / password123` que solo existe en el mock. Después contra el **backend real**: levanté [user-service](https://github.com/arrietajohn/user-service) del instructor en mi equipo con Docker (API Java, MySQL y RabbitMQ) y entré con el administrador que crea su `schema.sql`. La guía 01 pide justamente eso para demostrar la conexión: una petición exitosa contra el backend. Los pasos están en [backend-local/README.md](backend-local/README.md) y el resultado en la sección [Recorrido contra el backend real](#recorrido-contra-el-backend-real-user-service).
 
 ---
 
@@ -42,7 +43,7 @@ En Node corren las herramientas: npm, el servidor de desarrollo de Vite (incluid
 npm busca `package.json` en la carpeta actual. De ahí lee los scripts y ahí crea `node_modules` y el bloqueo. En otra carpeta falla con "no encuentra el manifiesto" o instala las dependencias donde no corresponde.
 
 **¿Por qué la pantalla de login abre aunque el backend esté apagado?**
-Porque Vite entrega el HTML, el CSS y el JavaScript; eso basta para dibujar el formulario. El backend solo se usa cuando el formulario hace la petición `POST /api/auth/login`. Que se vea el login prueba que arrancó el frontend; para probar la API hace falta una petición exitosa.
+Porque Vite entrega el HTML, el CSS y el JavaScript; eso basta para dibujar el formulario. El backend solo se usa cuando el formulario hace la petición `POST /api/auth/login`. Que se vea el login prueba que arrancó el frontend; para probar la API hace falta una petición exitosa. Esa prueba está en el [recorrido contra el backend real](#recorrido-contra-el-backend-real-user-service): `POST /api/auth/login → 200` con un JWT firmado por user-service.
 
 ---
 
@@ -173,11 +174,14 @@ BrowserSessionStore(localStorage)
 - **Pestañas:** el evento `storage` hace que cerrar sesión en una pestaña mande a login a las demás.
 - **Redirección segura en el login:** `AuthView` solo acepta un `redirect` que empiece por `/` y no por `//`, para no mandar a la persona a otro sitio.
 
-**Prueba manual:** sin sesión escribí `/usuarios` y terminé en `/login?redirect=/usuarios`. Al iniciar sesión volví a `/usuarios` con el marco privado.
+**Prueba manual (las tres partes que pide la guía):**
+1. Sin sesión escribí `/usuarios` y terminé en `/login?redirect=/usuarios`.
+2. Al iniciar sesión volví a `/usuarios` con el marco privado.
+3. Contra el backend real, cerré sesión (la URL quedó en `/login` y `nexo.session` desapareció de `localStorage`) y pulsé **Atrás**. La página protegida no se mostró: el guard volvió a revisar la sesión y redirigió a `/login?redirect=/usuarios`. El historial apunta a `/usuarios` y no a la edición, porque el cierre de sesión usa `router.replace`, que reemplaza la entrada actual en lugar de agregar una.
 
-| Sin sesión: el guard manda a login | Después del login: vuelve a la ruta pedida |
-| --- | --- |
-| ![Guard](evidencias/01-guard-redirige-a-login.jpg) | ![Listado tras login](evidencias/03-listado-tras-login.jpg) |
+| Sin sesión: el guard manda a login | Después del login: vuelve a la ruta pedida | Atrás después de cerrar sesión |
+| --- | --- | --- |
+| ![Guard](evidencias/01-guard-redirige-a-login.jpg) | ![Listado tras login](evidencias/03-listado-tras-login.jpg) | ![Atrás tras logout](evidencias/backend-real/r5-atras-tras-logout.jpg) |
 
 ---
 
@@ -245,9 +249,15 @@ Además: entrando con la cuenta activada (rol Revisor) desaparecen los botones d
 - `@media (prefers-reduced-motion: reduce)` quita transiciones a quien lo pidió.
 - Las insignias de estado usan una clase derivada del dato: `:class="user.status.toLowerCase()"`.
 
-**Práctica:** cambié `--green` en vivo en Chrome (como en DevTools, desde la consola de la página) de `#245b49` a `#6d28d9`. Solo cambió el color del botón principal; datos, validaciones y peticiones siguieron iguales. Luego la restauré. Así se ve que estilos y casos de uso no están mezclados.
+**Prácticas** (en vivo en Chrome, como en DevTools, sin tocar el código fuente):
+1. Cambié `--green` de `#245b49` a `#6d28d9`. Solo cambió el color del botón principal; datos, validaciones y peticiones siguieron iguales.
+2. Cambié solo el `padding` de `.action-card`, de `27px` a `8px 10px`. Las tres tarjetas se achicaron; las cifras, la tabla y las peticiones no cambiaron.
 
-![Variable --green cambiada](evidencias/ejercicios/e6-guia11-variable-green-cambiada.jpg)
+En los dos casos restauré el valor original. Así se ve que estilos y casos de uso no están mezclados.
+
+| `--green` cambiada | `.action-card` antes | `.action-card` después |
+| --- | --- | --- |
+| ![Variable --green cambiada](evidencias/ejercicios/e6-guia11-variable-green-cambiada.jpg) | ![Padding antes](evidencias/ejercicios/e7-guia11-padding-antes.jpg) | ![Padding después](evidencias/ejercicios/e8-guia11-padding-despues.jpg) |
 
 La comprobación automática del diseño adaptable está en el escenario 4 de Playwright (390×844 y 1440×1100):
 
@@ -318,18 +328,51 @@ En el almacenamiento del navegador, la clave `nexo.session` contenía `userId`, 
 | Paginar de cinco en cinco | `pageSize = 5` en `UsersView` | 7 usuarios → "Página 1 de 2"; la 2 muestra 2 | Hecho |
 | Columna con el ID | Template de `UsersView` y un estilo | Columna nueva; el DTO y la petición no cambian | Hecho |
 | Hora de vencimiento | `App.vue` formatea `expiresAt` (ms) | "vence 05:17 p. m." en la cabecera, sin cierre automático | Hecho |
-| Mensajes de validación por campo | Contrato de errores + formularios | — | Análisis abajo |
-| Sesión compartida reactiva | Frontera GUI/estado | — | Análisis abajo |
-| Paginación de servidor | Backend, puertos, adaptador y GUI | — | Análisis abajo |
+| Mensajes de validación por campo | Errores del dominio, servicio, `HttpClient` y formularios | Tres errores a la vez, cada uno bajo su input, sin llamar a la API; 4 pruebas unitarias | Hecho |
+| Sesión compartida reactiva | Frontera GUI/estado (`session-state.ts`) | Otra pestaña cambia de usuario y esta actualiza rol y botones sin navegar; 1 prueba unitaria | Hecho |
+| Paginación de servidor | Backend, puertos, adaptador y GUI | — | Análisis abajo: requiere cambiar user-service |
 
 | Etiqueta, columna ID, 5 por página y hora de vencimiento | Página 2 de 2 |
 | --- | --- |
 | ![Ejercicios 1, 3, 4 y 5](evidencias/ejercicios/e1-etiqueta-columna-id-cinco-por-pagina.jpg) | ![Página 2](evidencias/ejercicios/e2-pagina-2-de-2.jpg) |
 
-**Los tres ejercicios grandes, qué capa cambiaría:**
-- **Validación por campo:** hoy `DomainError` lleva solo un mensaje. Habría que agregarle el nombre del campo (por ejemplo `new DomainError(msg, 'email')`), que `HttpClient` lea los errores por campo de un 400 en vez de reemplazarlos por el texto local, y que los formularios guarden un `errors` por campo y lo muestren bajo cada input. El dominio sigue validando.
-- **Sesión reactiva:** hoy `App.vue` relee la sesión cuando cambia la ruta (`void route.fullPath`). Se podría exponer la sesión como un `ref` compartido, actualizado por un `SessionStore` que notifique cambios (y por el evento `storage`). Así el rol se actualiza sin depender de navegar. El dominio y la aplicación no cambian; cambia la frontera GUI/estado.
-- **Paginación de servidor:** primero hay que acordarla con el backend (`GET /api/users?page=&size=` y una respuesta con total). Luego cambian `UserGateway.list`, el adaptador, la consulta `ListUsersQuery` y `UsersView`, que dejaría de recortar en memoria. No se puede hacer solo en el frontend.
+#### Ejercicio 6 · Mensajes de validación por campo
+
+Cada capa cambió solo en lo que le toca:
+
+| Capa | Cambio |
+| --- | --- |
+| Dominio | `DomainError` lleva el campo (`'name'`, `'email'`, `'password'`…); los objetos de valor y `User` lo indican al fallar. Nuevo `ValidationError` con un mapa `fields`. |
+| Aplicación | `validateFields(...)` ejecuta cada regla y junta los errores, para mostrarlos todos a la vez y no solo el primero. Las reglas siguen en el dominio. |
+| Adaptador | user-service responde los 400 como `"name: …, password: …, email: …"` (lo comprobé contra el backend real). `parseFieldErrors` lo convierte en `ApiValidationError` con los mismos campos. |
+| GUI | `fieldErrorsOf(e)` traduce cualquiera de los dos errores. `UserFormView` y `AuthView` muestran cada mensaje debajo de su input con `aria-invalid` y `aria-describedby`, y lo borran al escribir. |
+
+Prueba en Chrome contra el backend real con nombre `"  Al  "` (pasa el `minlength` del HTML por los espacios), correo `ana@correo` (el navegador lo acepta, el dominio no) y una contraseña de 8 espacios. Aparecieron los tres errores y **no salió ninguna petición a la API**. Las pruebas unitarias cubren además el formato del 400 del backend.
+
+![Errores por campo](evidencias/ejercicios/e9-errores-por-campo.jpg)
+
+#### Ejercicio 7 · Sesión compartida reactiva
+
+Antes, `App.vue` releía la sesión solo cuando cambiaba la ruta (`void route.fullPath`), e Inicio y Usuarios leían el rol una sola vez. Ahora `src/entrypoint/gui/session-state.ts` (rama `ejercicios`) crea un `shallowRef` con la sesión y lo entrega por `provide/inject`, igual que los casos de uso. Se actualiza al iniciar y cerrar sesión, con el evento `storage` (otra pestaña) y con `session-expired`. `App`, `HomeView`, `UsersView` y `UserFormView` leen el rol de ahí con `computed`. El dominio y la aplicación no cambiaron.
+
+Prueba en Chrome contra el backend real, con dos pestañas:
+1. La pestaña A estaba en el directorio como administrador, con botones de eliminar.
+2. En la pestaña B inicié sesión como la revisora.
+3. La pestaña A, **sin navegar**, cambió la cabecera a "Revisor", quitó los botones de eliminar y los lápices pasaron a decir "Ver".
+4. Al cerrar sesión en B, la pestaña A fue al login.
+
+| Pestaña A antes | Pestaña A después del login en B |
+| --- | --- |
+| ![Antes](evidencias/ejercicios/e10-pestana-a-admin-antes.jpg) | ![Después](evidencias/ejercicios/e11-pestana-a-revisor-despues.jpg) |
+
+#### Ejercicio 8 · Paginación de servidor (no implementado, y por qué)
+
+No se puede hacer solo en el frontend: user-service devuelve la lista completa en `GET /api/users` y no acepta `page` ni `size`. Primero habría que acordarlo y cambiarlo en el backend (por ejemplo `GET /api/users?page=1&size=8` con el total en la respuesta). Después cambiarían:
+- `UserGateway.list` y `UserHttpAdapter`, para pedir y leer una página;
+- `ListUsersQuery`, para llevar `page` y `size`;
+- `UsersView`, que pediría cada página al servidor en lugar de recortar con `slice`.
+
+Simularlo solo en el mock dejaría la app incompatible con el backend real, que es justo lo que la guía pide evitar.
 
 ---
 
@@ -348,16 +391,48 @@ En el almacenamiento del navegador, la clave `nexo.session` contenía `userId`, 
 | `views/UserFormView.vue`, `views/UsersView.vue` | `a823cab` · guía 10 |
 | `src/entrypoint/gui/styles.css` | `b41d4d2` · guía 11 |
 | `vitest.config.ts`, `playwright.config.ts`, `tests/unit`, `tests/e2e`, `postman/**` | `35e6a25` · guía 12 |
-| `docs/` (este documento y las evidencias), `README.md` | guías 13 y 14 |
+| `docs/TALLER.md`, `docs/evidencias/`, `docs/backend-local/`, `README.md` | guías 13 y 14 |
+| Rama `ejercicios`: `src/entrypoint/gui/practicas/SaludoPractica.vue` (+ ruta) | Práctica guía 02 |
+| Rama `ejercicios`: cambios en `context.ts`, `HomeView.vue`, `UsersView.vue`, `App.vue` y `styles.css` | Ejercicios 1 a 5 de la guía 13 |
+| Rama `ejercicios`: `errors.ts`, `user-values.ts`, `User.ts`, `UserApplicationService.ts`, `HttpClient.ts`, formularios, `tests/unit/validacion-por-campo.test.ts` | Ejercicio 6 |
+| Rama `ejercicios`: `src/entrypoint/gui/session-state.ts`, `main.ts`, vistas, `tests/unit/sesion-reactiva.test.ts` | Ejercicio 7 |
 
 **Generados o locales (no se escriben a mano ni se suben):** `package-lock.json` (lo genera npm y sí se versiona para reproducir la instalación), `node_modules/` (npm), `dist/` (`npm run build`), `.env` (configuración local), `postman/simulation.log` (Playwright), `test-results/` y `playwright-report/` (Playwright).
 
 ---
 
+## Recorrido contra el backend real (user-service)
+
+La simulación de Postman no prueba que el servidor real acepte lo que envía el frontend (guía 12). Por eso levanté [user-service](https://github.com/arrietajohn/user-service), el backend del instructor (Spring Boot 3.3, Java 17), en mi equipo con Docker: la API, MySQL 8.4 y RabbitMQ 3.13. Los pasos están en [backend-local/README.md](backend-local/README.md). Nexo corrió sin `.env`, así que el proxy de Vite mandó `/api` a `http://localhost:8080`. Entré con el administrador que crea el `schema.sql` del backend.
+
+| Paso | Petición real | Estado | Qué se comprobó fuera del navegador |
+| --- | --- | --- | --- |
+| Login del administrador | `POST /api/auth/login` | 200 | JWT firmado por el backend; los claims pasaron la validación del adaptador |
+| Inicio y directorio | `GET /api/users` | 200 | Datos leídos de MySQL |
+| Crear a una revisora | `POST /api/users` | 201 | Fila en MySQL con el UUID que generó el frontend, estado `PENDING` y contraseña en bcrypt (`$2a$12$…`); evento `user.created` en RabbitMQ |
+| Abrir la edición | `GET /api/users/{id}` | 200 | — |
+| Activarla | `PUT /api/users/{id}` | 200 | Evento `user.updated` |
+| Cerrar sesión y Atrás | — | — | El guard redirige a `/login?redirect=/usuarios` |
+| Login de la revisora en otra pestaña | `POST /api/auth/login` | 200 | La cuenta activada ya puede entrar (ejercicio 7) |
+| Borrarla | `DELETE /api/users/{id}` | 204 | MySQL vuelve a tener solo al administrador; evento `user.deleted` |
+
+| Login real | Creación (201, pendiente) | Directorio leído de MySQL |
+| --- | --- | --- |
+| ![Login real](evidencias/backend-real/r1-login-real-inicio.jpg) | ![Creación](evidencias/backend-real/r2-crear-201-pendiente.jpg) | ![Directorio](evidencias/backend-real/r3-listado-mysql.jpg) |
+
+| Edición (PUT 200) | Borrado (DELETE 204) |
+| --- | --- |
+| ![Edición](evidencias/backend-real/r4-editar-put-200.jpg) | ![Borrado](evidencias/backend-real/r6-eliminar-204.jpg) |
+
+La última captura se tomó con la rama `ejercicios` activa, por eso muestra la columna de ID y la etiqueta "Administrador general".
+
 ## Problemas reales encontrados y cómo se resolvieron
 
 | Síntoma | Causa | Solución |
 | --- | --- | --- |
+| user-service no compila con mi Java 21 | El `pom.xml` exige JDK 17 (maven-toolchains) | Compilar dentro de Docker con `maven:3.9.11-eclipse-temurin-17` |
+| Sin RabbitMQ, crear o editar usuarios respondería 503 | El backend publica cada evento con `mandatory=true` y espera confirmación; el `compose.yaml` no trae RabbitMQ | `compose.local.yaml` agrega RabbitMQ; se crearon el exchange `domain.events` y una cola enlazada con `#` |
+| Los mensajes por campo se montaban sobre el borde del input | El input no tiene margen y el estilo usaba un margen negativo | Margen superior de 6 px, como `.field-hint` |
 | `npm install -D …` falló con `Cannot read properties of null (reading 'edgesOut')` | Error de npm 10.5.1 al resolver las dependencias opcionales de Vitest 5 | Instalar con un npm más nuevo sin tocar el global: `npx -y npm@11 install -D …` |
 | Aviso `install-scripts … esbuild (postinstall)` con npm 11 | npm 11 no ejecuta scripts de instalación que no se aprobaron | Se comprobó que `esbuild --version` responde y que el build funciona; no hizo falta desactivar las verificaciones |
 | `npm run test:e2e`: "5173 is already used" | El Vite manual seguía abierto y la configuración usa `reuseExistingServer: false` | Detener el servidor manual y repetir (tabla 2 de la guía 13: "Puerto ocupado en E2E") |
@@ -373,4 +448,4 @@ npx playwright install chromium   # una vez
 npm run test:e2e                  # requiere Postman CLI 1.70+ y los puertos 5173 y 4010 libres
 ```
 
-Para ver los ejercicios: `git switch ejercicios`.
+Para ver los ejercicios: `git switch ejercicios`. Para usar el backend real en local: [backend-local/README.md](backend-local/README.md).

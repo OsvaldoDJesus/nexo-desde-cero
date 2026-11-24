@@ -20,6 +20,10 @@ npm run dev
 
 Por defecto Vite reenvía `/api` a `http://localhost:8080`. Para usar otro backend crea un `.env` a partir de [.env.example](.env.example).
 
+### Con el backend real en local
+
+[docs/backend-local/README.md](docs/backend-local/README.md) explica cómo levantar [user-service](https://github.com/arrietajohn/user-service) con Docker (API Java, MySQL y RabbitMQ). Después basta `npm run dev`.
+
 ### Con la simulación local (sin backend)
 
 En una terminal:

@@ -1,0 +1,25 @@
+# Override local para el taller: agrega RabbitMQ y apunta la API a él.
+# Uso: docker compose -p nexo-backend -f compose.yaml -f compose.local.yaml up -d --build
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: nexo_local
+      RABBITMQ_DEFAULT_PASS: nexo_local_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  api:
+    environment:
+      RABBITMQ_URL: amqp://nexo_local:nexo_local_password@rabbitmq:5672/
+      RABBITMQ_DOMAIN_EXCHANGE: domain.events
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
