@@ -8,3 +8,6 @@
 
 /* Ejercicio guía 13: columna de ID en el directorio */
 .id-cell { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; color: var(--muted); background: transparent; }
+
+/* Ejercicio guía 13: hora de vencimiento de la sesión */
+.session-expiry { margin-left: 6px; color: var(--muted); font-size: 12px; }

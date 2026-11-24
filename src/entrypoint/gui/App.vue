@@ -5,6 +5,8 @@ import { House, Users, UserPlus, Pencil, Trash2, LogOut, Hexagon, ArrowUpRight, 
 import { useApplication, roleLabel } from './context';
 const route = useRoute(); const router = useRouter(); const app = useApplication();
 const session = computed(() => { void route.fullPath; return app.currentSession(); });
+// Ejercicio guía 13: expiresAt ya viene en milisegundos; solo se formatea para mostrarlo.
+const expiresAt = computed(() => session.value ? new Date(session.value.expiresAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '');
 const nav = [ { to: '/', label: 'Inicio', icon: House }, { to: '/usuarios/crear', label: 'Crear usuario', icon: UserPlus }, { to: '/usuarios', label: 'Listar usuarios', icon: Users }, { to: '/usuarios/editar', label: 'Editar usuario', icon: Pencil }, { to: '/usuarios/eliminar', label: 'Eliminar usuario', icon: Trash2 } ];
 function logout() { app.logout(); void router.replace('/login'); }
 </script>
@@ -18,7 +20,7 @@ function logout() { app.logout(); void router.replace('/login'); }
       <nav><RouterLink v-for="item in nav" :key="item.to" :to="item.to" :class="{ selected: route.path === item.to }"><component :is="item.icon" :size="19"/>{{ item.label }}<span v-if="route.path === item.to" class="nav-indicator"/></RouterLink></nav>
       <div class="sidebar-bottom"><div class="security-note"><ShieldCheck :size="20"/><div>Tu espacio, protegido<small>Acceso seguro a tu equipo</small></div></div><button class="logout" @click="logout"><LogOut :size="18"/>Cerrar sesión<ArrowUpRight :size="16"/></button></div>
     </aside>
-    <div class="main-area"><header class="topbar"><span>Espacio de trabajo <span class="breadcrumb">/</span> <strong>Usuarios</strong></span><div class="profile"><span class="online-dot"/> Sesión iniciada <div class="profile-avatar">{{ session?.role === 'ADMIN' ? 'AD' : 'US' }}</div><div class="profile-name">{{ roleLabel[session?.role || ''] || 'Usuario' }}<small>Cuenta personal</small></div></div></header><main><RouterView :key="route.fullPath"/></main><footer>Nexo · Administración de usuarios<span>Un equipo conectado empieza aquí.</span></footer></div>
+    <div class="main-area"><header class="topbar"><span>Espacio de trabajo <span class="breadcrumb">/</span> <strong>Usuarios</strong></span><div class="profile"><span class="online-dot"/> Sesión iniciada<span v-if="expiresAt" class="session-expiry" title="Hora en que vence el token; la app no cierra la sesión sola">· vence {{ expiresAt }}</span> <div class="profile-avatar">{{ session?.role === 'ADMIN' ? 'AD' : 'US' }}</div><div class="profile-name">{{ roleLabel[session?.role || ''] || 'Usuario' }}<small>Cuenta personal</small></div></div></header><main><RouterView :key="route.fullPath"/></main><footer>Nexo · Administración de usuarios<span>Un equipo conectado empieza aquí.</span></footer></div>
   </div>
   <RouterView v-else :key="route.path"/>
 </template>
