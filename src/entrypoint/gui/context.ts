@@ -8,5 +8,5 @@ export function useApplication() {
   return app;
 }
 export const errorMessage = (e: unknown) => e instanceof Error ? e.message : 'Ocurrió un error inesperado.';
-export const roleLabel: Record<string, string> = { ADMIN: 'Administrador', MEMBER: 'Miembro', REVIEWER: 'Revisor' };
+export const roleLabel: Record<string, string> = { ADMIN: 'Administrador general', MEMBER: 'Miembro', REVIEWER: 'Revisor' };
 export const statusLabel: Record<string, string> = { ACTIVE: 'Activo', INACTIVE: 'Inactivo', PENDING: 'Pendiente', BLOCKED: 'Bloqueado' };
